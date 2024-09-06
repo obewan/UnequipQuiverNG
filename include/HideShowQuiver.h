@@ -21,7 +21,6 @@ void HideQuiver(RE::Actor* actor) {
     for (const auto& [item, data] : inventory) {
         if (data.second && data.second->IsWorn()) {                                
             equipManager->UnequipObject(actor, data.second->GetObject());
-            SKSE::log::info("HideQuiver: quiver unequipped"); 
             break;
         }
     }    
