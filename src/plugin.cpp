@@ -5,7 +5,6 @@
 // Template source: https://github.com/SkyrimDev/HelloWorld-using-CommonLibSSE-NG
 // See also: https://github.com/CharmedBaryon/CommonLibSSE-NG/wiki
 
-std::filesystem::path logFilePath;
 
 void SetupLog() {
     auto logsFolder = SKSE::log::log_directory();
@@ -14,7 +13,7 @@ void SetupLog() {
         return;
     }
 
-    logFilePath = *logsFolder / std::format("{}.log", Plugin::NAME);
+    auto logFilePath = *logsFolder / std::format("{}.log", Plugin::NAME);
     auto fileLoggerPtr = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFilePath.string(), true);
     auto loggerPtr = std::make_shared<spdlog::logger>("log", std::move(fileLoggerPtr));
     spdlog::set_default_logger(std::move(loggerPtr));
