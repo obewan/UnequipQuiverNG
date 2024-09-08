@@ -5,7 +5,6 @@
 // Template source: https://github.com/SkyrimDev/HelloWorld-using-CommonLibSSE-NG
 // See also: https://github.com/CharmedBaryon/CommonLibSSE-NG/wiki
 
-
 void SetupLog() {
     auto logsFolder = SKSE::log::log_directory();
     if (!logsFolder) {
@@ -21,14 +20,13 @@ void SetupLog() {
     spdlog::flush_on(spdlog::level::info);
 }
 
-
 SKSEPluginLoad(const SKSE::LoadInterface *skse) {
     SetupLog();
 
-  	SKSE::log::info(("{} v{}"), Plugin::NAME, Plugin::VERSION);
+    SKSE::log::info(("{} v{}"), Plugin::NAME, Plugin::VERSION);
     SKSE::log::info("Game version : {}", skse->RuntimeVersion().string());
 
-    SKSE::Init(skse);    
+    SKSE::Init(skse);
 
     RegisterEquipEventHandler();
 
