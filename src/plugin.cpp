@@ -4,6 +4,7 @@
 
 // Template source: https://github.com/SkyrimDev/HelloWorld-using-CommonLibSSE-NG
 // See also: https://github.com/CharmedBaryon/CommonLibSSE-NG/wiki
+// And also (Steamless for debug): https://github.com/Ryan-rsm-McKenzie/CommonLibSSE/wiki/Getting-Started
 
 void SetupLog() {
     auto logsFolder = SKSE::log::log_directory();
