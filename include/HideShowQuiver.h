@@ -9,16 +9,36 @@ RE::FormID lastBowAmmoFormID = 0;
 RE::FormID lastCrossbowAmmoFormID = 0;
 
 /**
+ * save the currently equipped ammo FormID for the weapon type
+ */
+void SaveLastAmmo(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
+    if (!actor || !weapon) return;
+
+    auto inventory = actor->GetInventory([](RE::TESBoundObject& boundObject) { return boundObject.IsAmmo(); });
+    for (const auto& [obj, data] : inventory) {
+        if (data.second && data.second->IsWorn()) {
+            auto dataObj = data.second->GetObject();
+            if (!dataObj) continue;
+
+            auto ammo = RE::TESForm::LookupByID<RE::TESAmmo>(dataObj->formID);
+            if (!ammo) break;
+
+            if (weapon->IsBow() && !ammo->IsBolt()) {
+                lastBowAmmoFormID = dataObj->formID;
+            } else if (weapon->IsCrossbow() && ammo->IsBolt()) {
+                lastCrossbowAmmoFormID = dataObj->formID;
+            }
+            break;
+        }
+    }
+}
+
+/**
  * unequip quiver if its ammo is in the inventory and if it is worn
  */
-void HideQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
+void HideQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon = nullptr, bool saveLast = true) {
     if (!actor) {
         SKSE::log::error("HideQuiver: actor is null");
-        return;
-    }
-
-    if (!weapon) {
-        SKSE::log::error("HideQuiver: weapon is null");
         return;
     }
 
@@ -32,20 +52,20 @@ void HideQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
     for (const auto& [obj, data] : inventory) {
         if (data.second && data.second->IsWorn()) {
             auto dataObj = data.second->GetObject();
-            if (!dataObj) {
-                continue;
-            }
-            equipManager->UnequipObject(actor, dataObj);
+            if (!dataObj) continue;
 
-            auto ammo = RE::TESForm::LookupByID<RE::TESAmmo>(dataObj->formID);
-            if (!ammo) {
-                break;
+            if (saveLast && weapon) {
+                auto ammo = RE::TESForm::LookupByID<RE::TESAmmo>(dataObj->formID);
+                if (ammo) {
+                    if (weapon->IsBow() && !ammo->IsBolt()) {
+                        lastBowAmmoFormID = dataObj->formID;
+                    } else if (weapon->IsCrossbow() && ammo->IsBolt()) {
+                        lastCrossbowAmmoFormID = dataObj->formID;
+                    }
+                }
             }
-            if (weapon->IsBow() && !ammo->IsBolt()) {
-                lastBowAmmoFormID = dataObj->formID;
-            } else if (weapon->IsCrossbow() && ammo->IsBolt()) {
-                lastCrossbowAmmoFormID = dataObj->formID;
-            }
+
+            equipManager->UnequipObject(actor, dataObj);
             break;
         }
     }

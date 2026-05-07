@@ -22,16 +22,15 @@ public:
             auto weapon = RE::TESForm::LookupByID<RE::TESObjectWEAP>(a_event->baseObject);
             if (weapon && (weapon->IsBow() || weapon->IsCrossbow())) {
                 if (!a_event->equipped) {
-                    // unequip bow or crossbow event, so unequip quiver
-                    HideQuiver(actor, weapon);
-                    isShowingQuiver = false;
+                    // unequip bow or crossbow, save last ammo
+                    SaveLastAmmo(actor, weapon);
                 } else {
                     // equip bow or crossbow event, so equip quiver
                     ShowQuiver(actor, weapon);
                     isShowingQuiver = true;
                 }
                 
-            } else if (!weapon && a_event->equipped) {
+            } else if (a_event->equipped) {
                 // check if it is ammo equip event, prior to new weapon equip event
                 auto ammo = RE::TESForm::LookupByID<RE::TESAmmo>(a_event->baseObject);
                 if (ammo && isShowingQuiver) {
@@ -40,6 +39,10 @@ public:
                 }
                 else if (ammo) {
                     return RE::BSEventNotifyControl::kStop;  // Cancel the primary event to avoid double equip events
+                } else {
+                    // equip something that's not bow/crossbow and not ammo, hide quiver
+                    HideQuiver(actor, nullptr, false);
+                    isShowingQuiver = false;
                 }
             }
         }
