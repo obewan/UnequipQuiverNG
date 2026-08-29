@@ -5,11 +5,8 @@
 #include "SKSE/API.h"
 #include "SKSE/Logger.h"
 #include "SKSE/SKSE.h"
-#include "SKSE/Trampoline.h"
 
-static bool isShowingQuiver = false;
-
-static bool HasBowEquipped(RE::Actor* a_actor) {
+inline bool HasBowEquipped(RE::Actor* a_actor) {
     if (!a_actor) return false;
     auto equipped = a_actor->GetEquippedObject(true);
     if (equipped) {
@@ -22,13 +19,18 @@ static bool HasBowEquipped(RE::Actor* a_actor) {
 class EquipEventHandler : public RE::BSTEventSink<RE::TESEquipEvent> {
 public:
     virtual RE::BSEventNotifyControl ProcessEvent(const RE::TESEquipEvent* a_event,
-                                                  RE::BSTEventSource<RE::TESEquipEvent>* a_eventSource) override {
+                                                  RE::BSTEventSource<RE::TESEquipEvent>*) override {
         if (!a_event || !a_event->actor) {
             return RE::BSEventNotifyControl::kContinue;
         }
 
-        auto actor = RE::TESForm::LookupByID<RE::Actor>(a_event->actor->formID);
+        auto actor = a_event->actor->As<RE::Actor>();
         if (actor && actor->IsPlayerRef()) {
+            // Only bow and crossbow events drive the quiver.
+            //
+            // Reacting to any other equip would strip a quiver the player is wearing on
+            // purpose, and it is redundant anyway: swapping a bow for anything else always
+            // fires the bow unequip handled below.
             auto weapon = RE::TESForm::LookupByID<RE::TESObjectWEAP>(a_event->baseObject);
             if (weapon && (weapon->IsBow() || weapon->IsCrossbow())) {
                 if (!a_event->equipped) {
@@ -42,48 +44,31 @@ public:
                         task->AddTask([actor_id = actor->formID]() {
                             auto actor = RE::TESForm::LookupByID<RE::Actor>(actor_id);
                             if (actor && !HasBowEquipped(actor)) {
-                                HideQuiver(actor, nullptr, false);
-                                isShowingQuiver = false;
+                                HideQuiver(actor);
                             }
                         });
                     } else {
                         // Fallback if task interface is not available
                         if (!HasBowEquipped(actor)) {
-                            HideQuiver(actor, nullptr, false);
-                            isShowingQuiver = false;
+                            HideQuiver(actor);
                         }
                     }
                 } else {
                     // equip bow or crossbow event, so equip quiver
                     ShowQuiver(actor, weapon);
-                    isShowingQuiver = true;
-                }
-
-            } else if (a_event->equipped) {
-                // check if it is ammo equip event, prior to new weapon equip event
-                auto ammo = RE::TESForm::LookupByID<RE::TESAmmo>(a_event->baseObject);
-                if (ammo && isShowingQuiver) {
-                    isShowingQuiver = false;
-                    return RE::BSEventNotifyControl::kContinue;  // continue the showing quiver event
-                } else if (ammo) {
-                    return RE::BSEventNotifyControl::kStop;  // Cancel the primary event to avoid double equip events
-                } else {
-                    // equip something that's not bow/crossbow and not ammo.
-                    // only hide quiver if the player actually no longer has a bow equipped.
-                    // This prevents unequipping when eating food or using potions.
-                    if (!HasBowEquipped(actor)) {
-                        HideQuiver(actor, nullptr, false);
-                        isShowingQuiver = false;
-                    }
                 }
             }
         }
 
+        // Always kContinue. BSTEventSource::SendEvent breaks its dispatch loop on kStop,
+        // which starves every sink registered after this one -- equipment display mods
+        // stop seeing equip events and their gear goes invisible. It would not cancel the
+        // game's own equip in any case; the return value only controls the sink chain.
         return RE::BSEventNotifyControl::kContinue;
     }
 };
 
-void RegisterEquipEventHandler() {
+inline void RegisterEquipEventHandler() {
     static EquipEventHandler equipEventHandler;
     auto scriptEventSource = RE::ScriptEventSourceHolder::GetSingleton();
     if (scriptEventSource) {

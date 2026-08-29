@@ -5,13 +5,13 @@
 
 // See https://ng.commonlib.dev/class_r_e_1_1_actor.html
 
-RE::FormID lastBowAmmoFormID = 0;
-RE::FormID lastCrossbowAmmoFormID = 0;
+inline RE::FormID lastBowAmmoFormID = 0;
+inline RE::FormID lastCrossbowAmmoFormID = 0;
 
 /**
  * save the currently equipped ammo FormID for the weapon type
  */
-void SaveLastAmmo(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
+inline void SaveLastAmmo(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
     if (!actor || !weapon) return;
 
     auto inventory = actor->GetInventory([](RE::TESBoundObject& boundObject) { return boundObject.IsAmmo(); });
@@ -36,7 +36,7 @@ void SaveLastAmmo(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
 /**
  * unequip quiver if its ammo is in the inventory and if it is worn
  */
-void HideQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon = nullptr, bool saveLast = true) {
+inline void HideQuiver(RE::Actor* actor) {
     if (!actor) {
         SKSE::log::error("HideQuiver: actor is null");
         return;
@@ -54,17 +54,6 @@ void HideQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon = nullptr, bool save
             auto dataObj = data.second->GetObject();
             if (!dataObj) continue;
 
-            if (saveLast && weapon) {
-                auto ammo = RE::TESForm::LookupByID<RE::TESAmmo>(dataObj->formID);
-                if (ammo) {
-                    if (weapon->IsBow() && !ammo->IsBolt()) {
-                        lastBowAmmoFormID = dataObj->formID;
-                    } else if (weapon->IsCrossbow() && ammo->IsBolt()) {
-                        lastCrossbowAmmoFormID = dataObj->formID;
-                    }
-                }
-            }
-
             equipManager->UnequipObject(actor, dataObj);
             break;
         }
@@ -74,14 +63,14 @@ void HideQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon = nullptr, bool save
 /**
  * equip with previous ammo if there's still such ammo in the inventory
  */
-void ShowQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
+inline void ShowQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
     if (!actor) {
         SKSE::log::error("ShowQuiver: actor is null");
         return;
     }
 
     if (!weapon) {
-        SKSE::log::error("ShowQuiver: ammo is null");
+        SKSE::log::error("ShowQuiver: weapon is null");
         return;
     }
 
@@ -95,21 +84,21 @@ void ShowQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
         return;
     }
 
-    auto inventory = actor->GetInventory([](RE::TESBoundObject& boundObject) { return boundObject.IsAmmo(); });    
+    auto inventory = actor->GetInventory([](RE::TESBoundObject& boundObject) { return boundObject.IsAmmo(); });
     // check if it should equip previous ammo
     for (const auto& [obj, data] : inventory) {
+        if (!data.second) {
+            continue;
+        }
+
         auto dataObj = data.second->GetObject();
         if (!dataObj) {
             continue;
         }
-        
+
         if ((weapon->IsBow() && dataObj->formID == lastBowAmmoFormID && !data.second->IsWorn()) ||
             (weapon->IsCrossbow() && dataObj->formID == lastCrossbowAmmoFormID && !data.second->IsWorn())) {
-            try {
-                equipManager->EquipObject(actor, dataObj);
-            } catch (const std::exception& e) {
-                SKSE::log::error("ShowQuiver: Exception occurred while equipping object: {}", e.what());
-            }
+            equipManager->EquipObject(actor, dataObj);
             return;
         }
     }
