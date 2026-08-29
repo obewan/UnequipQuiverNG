@@ -22,12 +22,14 @@ void SetupLog() {
 }
 
 SKSEPluginLoad(const SKSE::LoadInterface *skse) {
+    // Init first: it resolves the runtime module that log_directory() needs.
+    // Pass false so CommonLibSSE does not install its own logger over ours.
+    SKSE::Init(skse, false);
+
     SetupLog();
 
     SKSE::log::info(("{} v{}"), Plugin::NAME, Plugin::VERSION);
     SKSE::log::info("Game version : {}", skse->RuntimeVersion().string());
-
-    SKSE::Init(skse);
 
     RegisterEquipEventHandler();
 

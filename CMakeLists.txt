@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.21)
 
 # [BEGIN set_project_name]
 # Set your project name. This will be the name of your SKSE .dll file.
-project(UnequipQuiverNG VERSION 1.2.2 LANGUAGES CXX)
+project(UnequipQuiverNG VERSION 1.3.0 LANGUAGES CXX)
 
 # [END set_project_name]
 
@@ -68,15 +68,6 @@ target_sources(
 		${CMAKE_CURRENT_BINARY_DIR}/cmake/Plugin.h
 		${CMAKE_CURRENT_BINARY_DIR}/cmake/version.rc
 )
-
-target_precompile_headers(
-	"${PROJECT_NAME}"
-	PRIVATE
-		include/PCH.h
-)
-
-
-
 
 # When your SKSE .dll is compiled, this will automatically copy the .dll into your mods folder.
 # Only works if you configure DEPLOY_ROOT above (or set the SKYRIM_MODS_FOLDER environment variable)

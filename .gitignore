@@ -17,3 +17,6 @@ cmake-build*
 
 # Skyrim archive files
 *.bsa
+
+# CMake install output
+install
