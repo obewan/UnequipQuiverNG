@@ -1,9 +1,16 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "unequipquiverng",
+  "version-semver": "1.3.0",
+  "description": "SKSE plugin that equips a quiver when a ranged weapon is drawn and unequips it otherwise.",
+  "homepage": "https://github.com/obewan/UnequipQuiverNG",
+  "license": "MIT",
+  "supports": "windows & x64",
   "dependencies": [
-    {
-      "name": "commonlibsse-ng",
-      "version>=": "3.7.0"
-    }
-  ]
+    "commonlibsse-ng",
+    "directxtk",
+    "rapidcsv",
+    "spdlog"
+  ],
+  "builtin-baseline": "15e5f3820f0370f1ba7150853762cec0688cd396"
 }
