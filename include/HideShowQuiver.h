@@ -34,6 +34,15 @@ inline void SaveLastAmmo(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
 }
 
 /**
+ * tell any open item menu to rebuild its list after we changed what is worn.
+ *
+ * The menus only refresh after their own equip actions. Their entries keep raw pointers to
+ * the item's ExtraDataLists, and unequipping frees the list that held the worn flag, so a
+ * stale entry crashes the game as soon as it is highlighted (Inventory3DManager copies it).
+ */
+inline void RefreshItemMenus(RE::Actor* actor) { RE::SendUIMessage::SendInventoryUpdateMessage(actor, nullptr); }
+
+/**
  * unequip quiver if its ammo is in the inventory and if it is worn
  */
 inline void HideQuiver(RE::Actor* actor) {
@@ -55,6 +64,7 @@ inline void HideQuiver(RE::Actor* actor) {
             if (!dataObj) continue;
 
             equipManager->UnequipObject(actor, dataObj);
+            RefreshItemMenus(actor);
             break;
         }
     }
@@ -99,6 +109,7 @@ inline void ShowQuiver(RE::Actor* actor, RE::TESObjectWEAP* weapon) {
         if ((weapon->IsBow() && dataObj->formID == lastBowAmmoFormID && !data.second->IsWorn()) ||
             (weapon->IsCrossbow() && dataObj->formID == lastCrossbowAmmoFormID && !data.second->IsWorn())) {
             equipManager->EquipObject(actor, dataObj);
+            RefreshItemMenus(actor);
             return;
         }
     }
